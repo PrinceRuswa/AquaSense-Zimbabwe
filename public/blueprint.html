@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AquaSense Zimbabwe – Hardware Blueprint & BOM</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --green-dark: #1a4731; --green-mid: #2d6a4f; --green-light: #40916c;
+  --yellow: #f4a61d; --yellow-light: #ffd166;
+  --bg: #f0f4f0; --wire-red:#ef4444; --wire-black:#1f2937;
+  --wire-yellow:#eab308; --wire-blue:#3b82f6; --wire-green:#22c55e;
+  --wire-orange:#f97316; --wire-purple:#a855f7; --wire-white:#e5e7eb;
+  --pin-bg:#1e3a2a;
+}
+* { font-family:'Inter',sans-serif; box-sizing:border-box; }
+body { background:var(--bg); color:#1a2e1a; }
+
+/* PRINT */
+@media print {
+  .no-print { display:none!important; }
+  .page-break { page-break-before:always; }
+  body { background:white; }
+  .card { box-shadow:none!important; border:1px solid #ccc!important; }
+}
+
+/* NAV TABS */
+.tab-btn { padding:10px 20px; border-radius:10px; font-size:13px; font-weight:600;
+  cursor:pointer; transition:all 0.2s; color:#6b7c6b; border:2px solid transparent; }
+.tab-btn.active { background:var(--green-dark); color:white; border-color:var(--green-dark); }
+.tab-btn:hover:not(.active) { border-color:var(--green-light); color:var(--green-dark); }
+
+.page { display:none; } .page.active { display:block; }
+.card { background:white; border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,0.07); border:1px solid #eef4ee; }
+
+/* COMPONENT CARDS */
+.comp-card { background:white; border-radius:12px; border:2px solid #eef4ee;
+  transition:all 0.2s; overflow:hidden; }
+.comp-card:hover { border-color:var(--green-light); box-shadow:0 4px 20px rgba(45,106,79,0.15); transform:translateY(-2px); }
+.comp-img { background:linear-gradient(135deg,#f0fdf4,#dcfce7); height:140px;
+  display:flex; align-items:center; justify-content:center; font-size:56px; }
+.badge-req { background:#d1fae5; color:#065f46; font-size:10px; font-weight:700;
+  padding:2px 8px; border-radius:20px; letter-spacing:0.5px; }
+.badge-opt { background:#fef3c7; color:#92400e; font-size:10px; font-weight:700;
+  padding:2px 8px; border-radius:20px; letter-spacing:0.5px; }
+.price-tag { background:var(--green-dark); color:var(--yellow); font-weight:700;
+  padding:4px 12px; border-radius:8px; font-size:13px; }
+
+/* SCHEMATIC SVG CANVAS */
+#schematicCanvas { background:#0d1117; border-radius:16px; width:100%;
+  overflow:auto; border:2px solid #30363d; }
+.schematic-wrap { min-width:900px; padding:24px; }
+
+/* Wire styles */
+.wire { stroke-width:2.5; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+.wire-red { stroke:var(--wire-red); }
+.wire-black { stroke:#374151; }
+.wire-yellow { stroke:var(--wire-yellow); }
+.wire-blue { stroke:var(--wire-blue); }
+.wire-green { stroke:var(--wire-green); }
+.wire-orange { stroke:var(--wire-orange); }
+.wire-purple { stroke:var(--wire-purple); }
+.wire-white { stroke:#d1d5db; }
+
+/* IC chip boxes */
+.ic-box { rx:6; ry:6; }
+.ic-label { font-family:'JetBrains Mono',monospace; font-weight:600; }
+.pin-label { font-family:'JetBrains Mono',monospace; font-size:9px; fill:#9ca3af; }
+.pin-dot { r:4; }
+
+/* BOM table */
+.bom-table th { background:var(--green-dark); color:white; padding:12px 16px;
+  font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+.bom-table td { padding:12px 16px; font-size:13px; border-bottom:1px solid #f0f4f0; }
+.bom-table tr:hover td { background:#f7faf7; }
+.bom-table tr:last-child td { border-bottom:none; }
+.total-row td { background:#f0fdf4; font-weight:700; color:var(--green-dark); }
+
+/* Assembly steps */
+.step-num { width:36px; height:36px; border-radius:50%; display:flex;
+  align-items:center; justify-content:center; font-weight:800; font-size:14px;
+  flex-shrink:0; }
+.step-connector { width:2px; background:#e8f0e8; margin-left:18px; height:24px; }
+
+/* Pinout table */
+.pin-row td { padding:8px 12px; font-size:12px; border-bottom:1px solid #f5f5f5; }
+.pin-num { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:11px; }
+
+/* Power flow */
+.flow-box { border-radius:12px; padding:12px 16px; text-align:center; min-width:100px; }
+.flow-arrow { display:flex; align-items:center; color:#9ca3af; font-size:20px; }
+
+/* Node diagram */
+.node-diagram { background:#0d1117; border-radius:16px; padding:32px; position:relative; }
+
+/* Tooltip */
+[data-tip] { position:relative; cursor:help; }
+[data-tip]:hover::after {
+  content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%;
+  transform:translateX(-50%); background:#1f2937; color:white; padding:6px 10px;
+  border-radius:8px; font-size:11px; white-space:nowrap; z-index:100;
+  pointer-events:none; box-shadow:0 4px 12px rgba(0,0,0,0.3);
+}
+
+.highlight-pulse { animation: hpulse 2s infinite; }
+@keyframes hpulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div style="background:linear-gradient(135deg,#1a4731,#0d2b1e)" class="text-white px-6 py-5 no-print">
+  <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-3">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background:rgba(244,166,29,0.2)">💧</div>
+      <div>
+        <div class="font-bold text-xl">AquaSense Zimbabwe</div>
+        <div class="text-sm" style="color:#f4a61d">Hardware Blueprint & Bill of Materials v1.0</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="text-xs px-3 py-1.5 rounded-full" style="background:rgba(244,166,29,0.2);color:#ffd166">
+        <i class="fas fa-microchip mr-1"></i>ESP32 + LoRaWAN + Solar
+      </div>
+      <button onclick="window.print()" class="px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2" style="background:var(--yellow);color:#000">
+        <i class="fas fa-print"></i> Print / PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB NAV -->
+<div class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm no-print">
+  <div class="max-w-7xl mx-auto px-6 py-3 flex gap-2 overflow-x-auto">
+    <button class="tab-btn active" onclick="showTab('overview')"><i class="fas fa-eye mr-1.5"></i>System Overview</button>
+    <button class="tab-btn" onclick="showTab('bom')"><i class="fas fa-list-ol mr-1.5"></i>Bill of Materials</button>
+    <button class="tab-btn" onclick="showTab('schematic')"><i class="fas fa-project-diagram mr-1.5"></i>Wiring Schematic</button>
+    <button class="tab-btn" onclick="showTab('pinout')"><i class="fas fa-plug mr-1.5"></i>Pin Connections</button>
+    <button class="tab-btn" onclick="showTab('power')"><i class="fas fa-bolt mr-1.5"></i>Power System</button>
+    <button class="tab-btn" onclick="showTab('assembly')"><i class="fas fa-tools mr-1.5"></i>Assembly Guide</button>
+    <button class="tab-btn" onclick="showTab('gateway')"><i class="fas fa-broadcast-tower mr-1.5"></i>Gateway Node</button>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 py-6">
+
+<!-- ═══════════════════════════════════════════════════════
+     TAB 1: SYSTEM OVERVIEW
+════════════════════════════════════════════════════════ -->
+<div id="tab-overview" class="page active">
+
+  <!-- Architecture Banner -->
+  <div class="card mb-6" style="background:linear-gradient(135deg,#0d1117,#1a3a28);color:white">
+    <h2 class="text-lg font-bold mb-2" style="color:var(--yellow)"><i class="fas fa-sitemap mr-2"></i>AquaSense Node Architecture</h2>
+    <p class="text-green-200 text-sm mb-6">Each field sensor node consists of 3 subsystems working together: Sensing → Processing → Transmission</p>
+    <div class="flex items-center justify-center flex-wrap gap-2">
+      <!-- Sensing -->
+      <div class="text-center">
+        <div class="rounded-xl p-4 mb-2" style="background:rgba(45,106,79,0.4);border:1px solid #40916c">
+          <div class="text-2xl mb-1">🌱</div>
+          <div class="font-bold text-sm">SENSING</div>
+          <div class="text-xs text-green-300 mt-1">Capacitive Soil Sensor</div>
+          <div class="text-xs text-green-300">DHT22 Temp/Humidity</div>
+        </div>
+        <div class="text-xs text-green-400">Analog + Digital signals</div>
+      </div>
+      <div class="text-gray-400 text-xl px-1">→</div>
+      <!-- Processing -->
+      <div class="text-center">
+        <div class="rounded-xl p-4 mb-2" style="background:rgba(244,166,29,0.15);border:1px solid rgba(244,166,29,0.4)">
+          <div class="text-2xl mb-1">⚡</div>
+          <div class="font-bold text-sm" style="color:var(--yellow)">PROCESSING</div>
+          <div class="text-xs text-yellow-300 mt-1">ESP32 DevKit V1</div>
+          <div class="text-xs text-yellow-300">12-bit ADC · Deep Sleep</div>
+        </div>
+        <div class="text-xs text-yellow-400">Wakes every 15 min</div>
+      </div>
+      <div class="text-gray-400 text-xl px-1">→</div>
+      <!-- Transmission -->
+      <div class="text-center">
+        <div class="rounded-xl p-4 mb-2" style="background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.4)">
+          <div class="text-2xl mb-1">📡</div>
+          <div class="font-bold text-sm text-blue-300">TRANSMISSION</div>
+          <div class="text-xs text-blue-300 mt-1">EBYTE E32 LoRa Module</div>
+          <div class="text-xs text-blue-300">SX1276 · 915MHz · 10km</div>
+        </div>
+        <div class="text-xs text-blue-400">GSM fallback (SIM800L)</div>
+      </div>
+      <div class="text-gray-400 text-xl px-1">→</div>
+      <!-- Gateway -->
+      <div class="text-center">
+        <div class="rounded-xl p-4 mb-2" style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.4)">
+          <div class="text-2xl mb-1">🔗</div>
+          <div class="font-bold text-sm text-purple-300">GATEWAY</div>
+          <div class="text-xs text-purple-300 mt-1">RAK7268 LoRaWAN</div>
+          <div class="text-xs text-purple-300">8-channel · Ethernet</div>
+        </div>
+        <div class="text-xs text-purple-400">Covers ~10km radius</div>
+      </div>
+      <div class="text-gray-400 text-xl px-1">→</div>
+      <!-- Cloud -->
+      <div class="text-center">
+        <div class="rounded-xl p-4 mb-2" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4)">
+          <div class="text-2xl mb-1">☁️</div>
+          <div class="font-bold text-sm text-green-300">CLOUD</div>
+          <div class="text-xs text-green-300 mt-1">Cloudflare Workers</div>
+          <div class="text-xs text-green-300">AquaSense Dashboard</div>
+        </div>
+        <div class="text-xs text-green-400">SMS alerts to farmer</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Component Overview Grid -->
+  <h3 class="text-lg font-bold mb-4" style="color:var(--green-dark)"><i class="fas fa-boxes mr-2" style="color:var(--yellow)"></i>Core Components — Click to Learn More</h3>
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+
+    <!-- ESP32 -->
+    <div class="comp-card cursor-pointer" onclick="showTab('pinout')">
+      <div class="comp-img">🔲</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">ESP32 DevKit V1</div>
+          <span class="badge-req">REQUIRED</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">Main microcontroller. Dual-core 240MHz, Wi-Fi + BT, 12-bit ADC, Deep Sleep mode</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$4–8</span>
+          <span class="text-xs text-gray-400">AliExpress</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Soil Moisture -->
+    <div class="comp-card cursor-pointer" onclick="showTab('schematic')">
+      <div class="comp-img">💧</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">Capacitive Soil Sensor v1.2</div>
+          <span class="badge-req">REQUIRED</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">Corrosion-resistant. Measures volumetric water content via capacitance. 3.3–5V, analog out</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$1–3</span>
+          <span class="text-xs text-gray-400">AliExpress</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DHT22 -->
+    <div class="comp-card cursor-pointer" onclick="showTab('schematic')">
+      <div class="comp-img">🌡️</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">DHT22 Sensor</div>
+          <span class="badge-req">REQUIRED</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">Temperature (-40 to 80°C) + Humidity (0–100%). Single-wire digital protocol. ±0.5°C accuracy</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$2–4</span>
+          <span class="text-xs text-gray-400">AliExpress</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- LoRa Module -->
+    <div class="comp-card cursor-pointer" onclick="showTab('schematic')">
+      <div class="comp-img">📡</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">EBYTE E32-915T30D</div>
+          <span class="badge-req">REQUIRED</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">SX1276 LoRa chip, 915MHz (Africa band), 10km range, SPI interface, 30dBm TX power</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$6–12</span>
+          <span class="text-xs text-gray-400">EBYTE / Ali</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solar Panel -->
+    <div class="comp-card cursor-pointer" onclick="showTab('power')">
+      <div class="comp-img">☀️</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">5W 6V Solar Panel</div>
+          <span class="badge-req">REQUIRED</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">Monocrystalline, 165×135mm. Powers system in daytime, charges battery. ~830mA max</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$4–8</span>
+          <span class="text-xs text-gray-400">AliExpress</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TP4056 -->
+    <div class="comp-card cursor-pointer" onclick="showTab('power')">
+      <div class="comp-img">🔋</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">TP4056 Charge Module</div>
+          <span class="badge-req">REQUIRED</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">Li-ion charge controller with overcharge/discharge protection. 5V in, 1A charge current max</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$0.50–1</span>
+          <span class="text-xs text-gray-400">AliExpress</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 18650 Battery -->
+    <div class="comp-card cursor-pointer" onclick="showTab('power')">
+      <div class="comp-img">🔌</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">18650 Li-ion Battery</div>
+          <span class="badge-req">REQUIRED</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">3.7V, 3400mAh (NCR18650B recommended). Night/cloudy operation. ~2–3 days no sun reserve</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$3–6</span>
+          <span class="text-xs text-gray-400">Local/Ali</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- IP65 Enclosure -->
+    <div class="comp-card cursor-pointer" onclick="showTab('assembly')">
+      <div class="comp-img">📦</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">IP65 ABS Enclosure</div>
+          <span class="badge-req">REQUIRED</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">150×100×70mm weatherproof box. Protects all electronics from rain, dust, insects in field</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$5–12</span>
+          <span class="text-xs text-gray-400">AliExpress</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step-up booster -->
+    <div class="comp-card">
+      <div class="comp-img">⚡</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">MT3608 Boost Converter</div>
+          <span class="badge-opt">OPTIONAL</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">Boosts 3.7V battery to stable 5V for ESP32. Prevents brownout resets during low battery</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$0.50</span>
+          <span class="text-xs text-gray-400">AliExpress</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIM800L -->
+    <div class="comp-card">
+      <div class="comp-img">📶</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">SIM800L GSM Module</div>
+          <span class="badge-opt">OPTIONAL</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">2G GPRS fallback for areas with no LoRa gateway. Send data via SMS/HTTP. Needs Econet SIM</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$4–8</span>
+          <span class="text-xs text-gray-400">Local shops</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resistor/Cap Kit -->
+    <div class="comp-card">
+      <div class="comp-img">🔩</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">Passive Components Kit</div>
+          <span class="badge-req">REQUIRED</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">10kΩ pull-up resistor (DHT22), 100nF bypass caps, 3mm LED status indicator, wire jumpers</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$1–2</span>
+          <span class="text-xs text-gray-400">Electronics store</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wooden post -->
+    <div class="comp-card">
+      <div class="comp-img">🪵</div>
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-1">
+          <div class="font-bold text-sm text-gray-800">Mounting Post + Bracket</div>
+          <span class="badge-req">REQUIRED</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">1.5m treated wood post or galvanised pipe. L-bracket for solar panel tilt angle 15–25°</div>
+        <div class="flex items-center justify-between">
+          <span class="price-tag">~$2–5</span>
+          <span class="text-xs text-gray-400">Hardware store</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Quick specs -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="card" style="border-left:4px solid var(--green-light)">
+      <div class="font-bold mb-2" style="color:var(--green-dark)"><i class="fas fa-dollar-sign mr-2" style="color:var(--yellow)"></i>Cost Per Node</div>
+      <div class="text-3xl font-bold" style="color:var(--green-dark)">$25–45</div>
+      <div class="text-xs text-gray-500 mt-1">USD per sensor node (AliExpress pricing)</div>
+      <div class="text-xs text-gray-400 mt-2">Gateway adds ~$150–200 one-time for up to 8km coverage</div>
+    </div>
+    <div class="card" style="border-left:4px solid #3b82f6">
+      <div class="font-bold mb-2" style="color:var(--green-dark)"><i class="fas fa-battery-full mr-2 text-blue-500"></i>Power Budget</div>
+      <div class="text-3xl font-bold text-blue-600">~48h</div>
+      <div class="text-xs text-gray-500 mt-1">Backup runtime on 3400mAh 18650 (no sun)</div>
+      <div class="text-xs text-gray-400 mt-2">5W solar fully recharges in ~4h direct Zimbabwe sun</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--yellow)">
+      <div class="font-bold mb-2" style="color:var(--green-dark)"><i class="fas fa-signal mr-2" style="color:var(--yellow)"></i>Radio Range</div>
+      <div class="text-3xl font-bold" style="color:#b45309">10km</div>
+      <div class="text-xs text-gray-500 mt-1">LoRaWAN line-of-sight (open Zimbabwe farmland)</div>
+      <div class="text-xs text-gray-400 mt-2">915MHz band · Spreading Factor 7–12 configurable</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TAB 2: BILL OF MATERIALS
+════════════════════════════════════════════════════════ -->
+<div id="tab-bom" class="page">
+  <div class="card mb-5">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold" style="color:var(--green-dark)"><i class="fas fa-list-ol mr-2" style="color:var(--yellow)"></i>Complete Bill of Materials — 1 Sensor Node</h2>
+      <div class="text-sm px-3 py-1 rounded-lg" style="background:#f0fdf4;color:#065f46">All prices in USD (AliExpress / local estimates)</div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full bom-table" style="border-radius:12px;overflow:hidden">
+        <thead>
+          <tr>
+            <th class="text-left" style="border-radius:12px 0 0 0">#</th>
+            <th class="text-left">Component</th>
+            <th class="text-left">Part Number / Model</th>
+            <th class="text-left">Specifications</th>
+            <th class="text-center">Qty</th>
+            <th class="text-right">Unit Price</th>
+            <th class="text-right" style="border-radius:0 12px 0 0">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="7" class="py-2 px-4 text-xs font-bold uppercase tracking-wider" style="background:#f7faf7;color:var(--green-mid)">🔲 MICROCONTROLLER</td></tr>
+          <tr>
+            <td class="pin-num">01</td>
+            <td class="font-semibold">ESP32 DevKit V1</td>
+            <td><span class="pin-num text-blue-600">ESP32-WROOM-32</span></td>
+            <td class="text-gray-600">240MHz, 4MB Flash, 520KB RAM, 36 GPIO, ADC, Wi-Fi, BT, Deep Sleep</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$5.00</td>
+            <td class="text-right font-bold">$5.00</td>
+          </tr>
+          <tr><td colspan="7" class="py-2 px-4 text-xs font-bold uppercase tracking-wider" style="background:#f7faf7;color:var(--green-mid)">🌱 SENSORS</td></tr>
+          <tr>
+            <td class="pin-num">02</td>
+            <td class="font-semibold">Capacitive Soil Moisture Sensor</td>
+            <td><span class="pin-num text-blue-600">v1.2 / SEN0193</span></td>
+            <td class="text-gray-600">3.3–5.5V, 0–3V analog out, corrosion-resistant gold-plated probe, 98×23mm</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$2.00</td>
+            <td class="text-right font-bold">$2.00</td>
+          </tr>
+          <tr>
+            <td class="pin-num">03</td>
+            <td class="font-semibold">DHT22 Temperature & Humidity</td>
+            <td><span class="pin-num text-blue-600">AM2302 / DHT22</span></td>
+            <td class="text-gray-600">-40–80°C (±0.5°C), 0–100% RH (±2%), single-wire digital, 3–5.5V</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$3.00</td>
+            <td class="text-right font-bold">$3.00</td>
+          </tr>
+          <tr><td colspan="7" class="py-2 px-4 text-xs font-bold uppercase tracking-wider" style="background:#f7faf7;color:var(--green-mid)">📡 COMMUNICATIONS</td></tr>
+          <tr>
+            <td class="pin-num">04</td>
+            <td class="font-semibold">LoRa Transceiver Module</td>
+            <td><span class="pin-num text-blue-600">EBYTE E32-915T30D</span></td>
+            <td class="text-gray-600">SX1276, 915MHz, SPI, 30dBm TX, -148dBm sensitivity, 10km range, UART/SPI</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$8.00</td>
+            <td class="text-right font-bold">$8.00</td>
+          </tr>
+          <tr>
+            <td class="pin-num">05</td>
+            <td class="font-semibold">915MHz LoRa Antenna</td>
+            <td><span class="pin-num text-blue-600">SMA 3dBi 915MHz</span></td>
+            <td class="text-gray-600">3dBi gain, SMA connector, omnidirectional, 170mm length, weatherproof</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$2.50</td>
+            <td class="text-right font-bold">$2.50</td>
+          </tr>
+          <tr><td colspan="7" class="py-2 px-4 text-xs font-bold uppercase tracking-wider" style="background:#f7faf7;color:var(--green-mid)">⚡ POWER SYSTEM</td></tr>
+          <tr>
+            <td class="pin-num">06</td>
+            <td class="font-semibold">5W 6V Monocrystalline Solar Panel</td>
+            <td><span class="pin-num text-blue-600">5W 6V MONO</span></td>
+            <td class="text-gray-600">165×135×2mm, Voc 7.2V, Isc 0.83A, -40–85°C, PET encapsulant</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$5.00</td>
+            <td class="text-right font-bold">$5.00</td>
+          </tr>
+          <tr>
+            <td class="pin-num">07</td>
+            <td class="font-semibold">TP4056 Li-ion Charge Module</td>
+            <td><span class="pin-num text-blue-600">TP4056 + DW01A</span></td>
+            <td class="text-gray-600">5V USB-C input, 1A charge current, over-voltage/current/temp protection, 4.2V cutoff</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$0.70</td>
+            <td class="text-right font-bold">$0.70</td>
+          </tr>
+          <tr>
+            <td class="pin-num">08</td>
+            <td class="font-semibold">18650 Li-ion Battery (Protected)</td>
+            <td><span class="pin-num text-blue-600">NCR18650B 3400mAh</span></td>
+            <td class="text-gray-600">3.7V nominal, 4.2V max, 2.5V cutoff, 3400mAh, built-in PCB protection</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$4.00</td>
+            <td class="text-right font-bold">$4.00</td>
+          </tr>
+          <tr>
+            <td class="pin-num">09</td>
+            <td class="font-semibold">18650 Battery Holder (Single)</td>
+            <td><span class="pin-num text-blue-600">BH-18650-PC</span></td>
+            <td class="text-gray-600">PCB mount, spring contacts, solder tabs, 1-cell holder</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$0.50</td>
+            <td class="text-right font-bold">$0.50</td>
+          </tr>
+          <tr>
+            <td class="pin-num">10</td>
+            <td class="font-semibold">MT3608 Step-Up Boost Module</td>
+            <td><span class="pin-num text-blue-600">MT3608 2A</span></td>
+            <td class="text-gray-600">Input 2–24V, Output 5V regulated, 2A max, prevents ESP32 brownout below 3.3V</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$0.50</td>
+            <td class="text-right font-bold">$0.50</td>
+          </tr>
+          <tr><td colspan="7" class="py-2 px-4 text-xs font-bold uppercase tracking-wider" style="background:#f7faf7;color:var(--green-mid)">📦 ENCLOSURE & MOUNTING</td></tr>
+          <tr>
+            <td class="pin-num">11</td>
+            <td class="font-semibold">IP65 ABS Waterproof Enclosure</td>
+            <td><span class="pin-num text-blue-600">150×100×70mm IP65</span></td>
+            <td class="text-gray-600">ABS plastic, foam gasket seal, 4× stainless screws, clear lid, DIN rail mounting ears</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$7.00</td>
+            <td class="text-right font-bold">$7.00</td>
+          </tr>
+          <tr>
+            <td class="pin-num">12</td>
+            <td class="font-semibold">Wooden Field Post + Solar Bracket</td>
+            <td><span class="pin-num text-blue-600">50×50mm × 1.5m post</span></td>
+            <td class="text-gray-600">Treated pine or hardwood, galvanised L-bracket 100×100mm, M4 stainless bolts</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$3.00</td>
+            <td class="text-right font-bold">$3.00</td>
+          </tr>
+          <tr><td colspan="7" class="py-2 px-4 text-xs font-bold uppercase tracking-wider" style="background:#f7faf7;color:var(--green-mid)">🔩 PASSIVE COMPONENTS</td></tr>
+          <tr>
+            <td class="pin-num">13</td>
+            <td class="font-semibold">10kΩ Resistor (Pull-up)</td>
+            <td><span class="pin-num text-blue-600">CF1/4W 10K ±5%</span></td>
+            <td class="text-gray-600">Used for DHT22 data line pull-up. 1/4W carbon film, through-hole</td>
+            <td class="text-center font-bold">2</td>
+            <td class="text-right">$0.05</td>
+            <td class="text-right font-bold">$0.10</td>
+          </tr>
+          <tr>
+            <td class="pin-num">14</td>
+            <td class="font-semibold">100nF Bypass Capacitors</td>
+            <td><span class="pin-num text-blue-600">104 50V Ceramic</span></td>
+            <td class="text-gray-600">Decoupling caps near VCC pins. Reduces power supply noise</td>
+            <td class="text-center font-bold">4</td>
+            <td class="text-right">$0.05</td>
+            <td class="text-right font-bold">$0.20</td>
+          </tr>
+          <tr>
+            <td class="pin-num">15</td>
+            <td class="font-semibold">3mm Green LED + 330Ω Resistor</td>
+            <td><span class="pin-num text-blue-600">3mm LED Status</span></td>
+            <td class="text-gray-600">Status indicator for transmission. Mounted through enclosure lid</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$0.10</td>
+            <td class="text-right font-bold">$0.10</td>
+          </tr>
+          <tr>
+            <td class="pin-num">16</td>
+            <td class="font-semibold">Dupont Jumper Wires (F-F/M-F)</td>
+            <td><span class="pin-num text-blue-600">20cm 2.54mm pitch</span></td>
+            <td class="text-gray-600">For breadboard prototyping. Use 22AWG silicone wire for final build</td>
+            <td class="text-center font-bold">20</td>
+            <td class="text-right">$0.05</td>
+            <td class="text-right font-bold">$1.00</td>
+          </tr>
+          <tr>
+            <td class="pin-num">17</td>
+            <td class="font-semibold">Waterproof Cable Glands (M16)</td>
+            <td><span class="pin-num text-blue-600">PG7 / M16 IP68</span></td>
+            <td class="text-gray-600">For soil probe cable entry into enclosure. Maintains IP65 rating</td>
+            <td class="text-center font-bold">2</td>
+            <td class="text-right">$0.30</td>
+            <td class="text-right font-bold">$0.60</td>
+          </tr>
+          <tr>
+            <td class="pin-num">18</td>
+            <td class="font-semibold">Micro SD Card Module (Optional)</td>
+            <td><span class="pin-num text-blue-600">SPI MicroSD</span></td>
+            <td class="text-gray-600">Local data logging when radio connection fails. SPI interface, 3.3V logic</td>
+            <td class="text-center font-bold">1</td>
+            <td class="text-right">$1.00</td>
+            <td class="text-right font-bold">$1.00</td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="5" class="font-bold text-right text-base">TOTAL (1 SENSOR NODE)</td>
+            <td></td>
+            <td class="text-right text-xl" style="color:var(--green-dark)">≈ $43.20</td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="5" class="font-bold text-right text-sm text-gray-500">4 Nodes (full farm kit)</td>
+            <td></td>
+            <td class="text-right text-base text-gray-600">≈ $172.80</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Gateway BOM -->
+  <div class="card">
+    <h3 class="font-bold mb-4" style="color:var(--green-dark)"><i class="fas fa-broadcast-tower mr-2" style="color:var(--yellow)"></i>Gateway Node — One-Time Farm Cost</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full bom-table" style="border-radius:12px;overflow:hidden">
+        <thead>
+          <tr><th class="text-left">#</th><th class="text-left">Component</th><th class="text-left">Model</th><th class="text-left">Purpose</th><th class="text-right">Price</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="pin-num">G1</td><td class="font-semibold">RAK7268 WisGate Edge Lite 2</td><td class="pin-num text-blue-600">RAK7268V2</td><td class="text-gray-600">8-channel LoRaWAN indoor/outdoor gateway, Ethernet + 4G LTE, covers 10km</td><td class="text-right font-bold">~$180</td></tr>
+          <tr><td class="pin-num">G2</td><td class="font-semibold">LoRa Gateway Outdoor Antenna</td><td class="pin-num text-blue-600">915MHz 5dBi N-type</td><td class="text-gray-600">Extend gateway coverage, mount on roof/tower</td><td class="text-right font-bold">~$15</td></tr>
+          <tr><td class="pin-num">G3</td><td class="font-semibold">Econet / NetOne SIM (Data)</td><td class="pin-num text-blue-600">Prepaid IoT SIM</td><td class="text-gray-600">Mobile data for cloud upload when no Ethernet available</td><td class="text-right font-bold">~$5/mo</td></tr>
+          <tr class="total-row"><td colspan="4" class="text-right font-bold">GATEWAY TOTAL (one-off)</td><td class="text-right text-lg" style="color:var(--green-dark)">≈ $195</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-4 p-4 rounded-xl text-sm" style="background:#f0fdf4">
+      <i class="fas fa-info-circle mr-2 text-green-600"></i>
+      <strong>Budget Summary:</strong> 4-field complete system = 4 nodes (~$173) + 1 gateway (~$195) = <strong>~$368 total</strong>. This covers a 10km radius farm with unlimited sensor nodes added later.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TAB 3: WIRING SCHEMATIC
+════════════════════════════════════════════════════════ -->
+<div id="tab-schematic" class="page">
+  <div class="card mb-5">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-bold" style="color:var(--green-dark)"><i class="fas fa-project-diagram mr-2" style="color:var(--yellow)"></i>Full Wiring Schematic — AquaSense Sensor Node</h2>
+      <div class="flex gap-2 flex-wrap">
+        <span class="px-2 py-1 rounded text-xs font-semibold" style="background:#ef444422;color:#ef4444">■ VCC (3.3V)</span>
+        <span class="px-2 py-1 rounded text-xs font-semibold" style="background:#1f293722;color:#374151">■ GND</span>
+        <span class="px-2 py-1 rounded text-xs font-semibold" style="background:#eab30822;color:#92400e">■ Data/Signal</span>
+        <span class="px-2 py-1 rounded text-xs font-semibold" style="background:#3b82f622;color:#1e40af">■ SPI (LoRa)</span>
+        <span class="px-2 py-1 rounded text-xs font-semibold" style="background:#22c55e22;color:#065f46">■ Digital I/O</span>
+      </div>
+    </div>
+
+    <div id="schematicCanvas" class="overflow-x-auto">
+      <div class="schematic-wrap">
+        <svg viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg" style="min-width:900px;width:100%">
+          <defs>
+            <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0,0 L0,8 L8,4 z" fill="#3b82f6"/>
+            </marker>
+            <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0,0 L0,8 L8,4 z" fill="#ef4444"/>
+            </marker>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- ─── BACKGROUND GRID ─── -->
+          <rect width="1000" height="700" fill="#0d1117"/>
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e3a28" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="1000" height="700" fill="url(#grid)"/>
+
+          <!-- ─── TITLE ─── -->
+          <text x="500" y="28" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#f4a61d" font-weight="600">AquaSense Zimbabwe — Sensor Node Schematic v1.0</text>
+          <text x="500" y="44" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#4b5563">Prepared by: Prince Ruswa · Uncommon Builders Club</text>
+
+          <!-- ═══════════════════ ESP32 CHIP ═══════════════════ -->
+          <rect x="350" y="60" width="220" height="320" rx="8" fill="#1e3a28" stroke="#40916c" stroke-width="2"/>
+          <rect x="350" y="60" width="220" height="28" rx="8" fill="#2d6a4f"/>
+          <text x="460" y="79" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="white" font-weight="700">ESP32 DevKit V1</text>
+          <text x="460" y="95" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#86efac">WROOM-32 · 240MHz</text>
+
+          <!-- LEFT PINS of ESP32 -->
+          <!-- 3.3V out -->
+          <line x1="350" y1="115" x2="330" y2="115" stroke="#ef4444" stroke-width="2"/>
+          <circle cx="330" cy="115" r="3" fill="#ef4444"/>
+          <text x="348" y="119" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#ef4444">3V3</text>
+          <!-- GND -->
+          <line x1="350" y1="135" x2="330" y2="135" stroke="#374151" stroke-width="2"/>
+          <circle cx="330" cy="135" r="3" fill="#6b7280"/>
+          <text x="348" y="139" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#9ca3af">GND</text>
+          <!-- GPIO4 - DHT22 -->
+          <line x1="350" y1="160" x2="310" y2="160" stroke="#22c55e" stroke-width="2"/>
+          <circle cx="310" cy="160" r="3" fill="#22c55e"/>
+          <text x="348" y="164" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#22c55e">GPIO4</text>
+          <!-- GPIO34 - Soil sensor analog -->
+          <line x1="350" y1="185" x2="310" y2="185" stroke="#eab308" stroke-width="2"/>
+          <circle cx="310" cy="185" r="3" fill="#eab308"/>
+          <text x="348" y="189" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#eab308">GPIO34(ADC)</text>
+          <!-- GPIO5 - LED -->
+          <line x1="350" y1="210" x2="310" y2="210" stroke="#a855f7" stroke-width="2"/>
+          <circle cx="310" cy="210" r="3" fill="#a855f7"/>
+          <text x="348" y="214" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#a855f7">GPIO5 (LED)</text>
+
+          <!-- RIGHT PINS of ESP32 - SPI for LoRa -->
+          <!-- GPIO18 SCK -->
+          <line x1="570" y1="130" x2="600" y2="130" stroke="#3b82f6" stroke-width="2"/>
+          <circle cx="600" cy="130" r="3" fill="#3b82f6"/>
+          <text x="572" y="134" font-family="JetBrains Mono" font-size="8" fill="#3b82f6">GPIO18 (SCK)</text>
+          <!-- GPIO23 MOSI -->
+          <line x1="570" y1="152" x2="600" y2="152" stroke="#3b82f6" stroke-width="2"/>
+          <circle cx="600" cy="152" r="3" fill="#3b82f6"/>
+          <text x="572" y="156" font-family="JetBrains Mono" font-size="8" fill="#3b82f6">GPIO23 (MOSI)</text>
+          <!-- GPIO19 MISO -->
+          <line x1="570" y1="174" x2="600" y2="174" stroke="#3b82f6" stroke-width="2"/>
+          <circle cx="600" cy="174" r="3" fill="#3b82f6"/>
+          <text x="572" y="178" font-family="JetBrains Mono" font-size="8" fill="#3b82f6">GPIO19 (MISO)</text>
+          <!-- GPIO15 NSS -->
+          <line x1="570" y1="196" x2="600" y2="196" stroke="#60a5fa" stroke-width="2"/>
+          <circle cx="600" cy="196" r="3" fill="#60a5fa"/>
+          <text x="572" y="200" font-family="JetBrains Mono" font-size="8" fill="#60a5fa">GPIO15 (NSS/CS)</text>
+          <!-- GPIO2 RESET -->
+          <line x1="570" y1="218" x2="600" y2="218" stroke="#93c5fd" stroke-width="2"/>
+          <circle cx="600" cy="218" r="3" fill="#93c5fd"/>
+          <text x="572" y="222" font-family="JetBrains Mono" font-size="8" fill="#93c5fd">GPIO2 (RST)</text>
+          <!-- GPIO26 DIO0 -->
+          <line x1="570" y1="240" x2="600" y2="240" stroke="#bfdbfe" stroke-width="2"/>
+          <circle cx="600" cy="240" r="3" fill="#bfdbfe"/>
+          <text x="572" y="244" font-family="JetBrains Mono" font-size="8" fill="#bfdbfe">GPIO26 (DIO0)</text>
+
+          <!-- 5V and GND for power -->
+          <line x1="350" y1="310" x2="310" y2="310" stroke="#ef4444" stroke-width="2"/>
+          <circle cx="310" cy="310" r="3" fill="#ef4444"/>
+          <text x="348" y="314" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#ef4444">VIN (5V in)</text>
+          <line x1="350" y1="330" x2="310" y2="330" stroke="#374151" stroke-width="2"/>
+          <circle cx="310" cy="330" r="3" fill="#6b7280"/>
+          <text x="348" y="334" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#9ca3af">GND</text>
+
+          <!-- ESP32 chip graphic inside -->
+          <rect x="395" y="250" width="130" height="80" rx="4" fill="#0d2b1e" stroke="#22c55e" stroke-width="1"/>
+          <text x="460" y="268" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#86efac">ESP32-WROOM-32D</text>
+          <text x="460" y="282" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="#4b5563">Xtensa LX6 Dual Core</text>
+          <text x="460" y="294" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="#4b5563">512KB SRAM · 4MB Flash</text>
+          <text x="460" y="306" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="#4b5563">Wi-Fi 802.11 b/g/n</text>
+          <text x="460" y="318" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="#4b5563">Bluetooth 4.2</text>
+
+          <!-- ═══════════════════ SOIL SENSOR ═══════════════════ -->
+          <rect x="60" y="100" width="160" height="100" rx="8" fill="#1a3a20" stroke="#22c55e" stroke-width="1.5"/>
+          <text x="140" y="120" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#86efac" font-weight="700">Capacitive Soil</text>
+          <text x="140" y="133" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#86efac">Moisture Sensor v1.2</text>
+          <text x="140" y="148" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#4b7c54">3.3V · Analog Output</text>
+
+          <!-- Soil sensor pins -->
+          <line x1="220" y1="125" x2="260" y2="125" stroke="#ef4444" stroke-width="2"/>
+          <text x="222" y="121" font-family="JetBrains Mono" font-size="7" fill="#ef4444">VCC</text>
+          <line x1="220" y1="145" x2="260" y2="145" stroke="#374151" stroke-width="2"/>
+          <text x="222" y="141" font-family="JetBrains Mono" font-size="7" fill="#9ca3af">GND</text>
+          <line x1="220" y1="168" x2="260" y2="168" stroke="#eab308" stroke-width="2"/>
+          <text x="222" y="164" font-family="JetBrains Mono" font-size="7" fill="#eab308">AOUT</text>
+          <!-- Soil probe representation -->
+          <rect x="100" y="190" width="8" height="50" rx="2" fill="#b45309"/>
+          <rect x="116" y="190" width="8" height="50" rx="2" fill="#b45309"/>
+          <path d="M100,240 L104,255 L108,240" fill="#92400e"/>
+          <path d="M116,240 L120,255 L124,240" fill="#92400e"/>
+          <text x="140" y="210" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#b45309">Probe Electrodes</text>
+          <text x="140" y="222" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#b45309">Gold-plated</text>
+
+          <!-- Wires from soil sensor to ESP32 -->
+          <!-- VCC: soil VCC → ESP32 3.3V -->
+          <path d="M260,125 L295,125 L295,115 L330,115" class="wire wire-red"/>
+          <!-- GND: soil GND → ESP32 GND -->
+          <path d="M260,145 L295,145 L295,135 L330,135" class="wire wire-black"/>
+          <!-- AOUT → GPIO34 -->
+          <path d="M260,168 L295,168 L295,185 L310,185" class="wire wire-yellow"/>
+
+          <!-- ═══════════════════ DHT22 SENSOR ═══════════════════ -->
+          <rect x="60" y="260" width="140" height="100" rx="8" fill="#1a2a3a" stroke="#60a5fa" stroke-width="1.5"/>
+          <text x="130" y="280" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#93c5fd" font-weight="700">DHT22</text>
+          <text x="130" y="293" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#93c5fd">Temp + Humidity</text>
+          <text x="130" y="306" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#475569">-40–80°C · 0–100%RH</text>
+          <!-- DHT22 pins -->
+          <text x="65" y="330" font-family="JetBrains Mono" font-size="7" fill="#ef4444">VCC</text>
+          <text x="65" y="345" font-family="JetBrains Mono" font-size="7" fill="#22c55e">DATA</text>
+          <text x="65" y="360" font-family="JetBrains Mono" font-size="7" fill="#9ca3af">GND</text>
+          <line x1="200" y1="327" x2="250" y2="327" stroke="#ef4444" stroke-width="1.5"/>
+          <line x1="200" y1="343" x2="250" y2="343" stroke="#22c55e" stroke-width="1.5"/>
+          <line x1="200" y1="358" x2="250" y2="358" stroke="#374151" stroke-width="1.5"/>
+
+          <!-- 10k pull-up resistor symbol -->
+          <rect x="255" y="338" width="20" height="10" rx="2" fill="#1a3a20" stroke="#22c55e" stroke-width="1"/>
+          <text x="265" y="346" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="#86efac">10K</text>
+
+          <!-- DHT22 DATA → GPIO4 -->
+          <path d="M275,343 L305,343 L305,160 L310,160" class="wire wire-green"/>
+          <!-- DHT22 VCC → 3.3V -->
+          <path d="M250,327 L305,327 L305,115 L330,115" class="wire wire-red" stroke-dasharray="4,2"/>
+          <!-- DHT22 GND → GND -->
+          <path d="M250,358 L302,358 L302,135 L330,135" class="wire wire-black" stroke-dasharray="4,2"/>
+
+          <!-- ═══════════════════ LORA MODULE ═══════════════════ -->
+          <rect x="640" y="80" width="200" height="220" rx="8" fill="#1a1a3a" stroke="#3b82f6" stroke-width="2"/>
+          <rect x="640" y="80" width="200" height="26" rx="8" fill="#1e3a8a"/>
+          <text x="740" y="97" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="white" font-weight="700">EBYTE E32-915T30D</text>
+          <text x="740" y="112" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#93c5fd">SX1276 · 915MHz · SPI</text>
+
+          <!-- LoRa module left pins (inputs from ESP32) -->
+          <line x1="640" y1="130" x2="608" y2="130" stroke="#3b82f6" stroke-width="2"/>
+          <text x="642" y="127" font-family="JetBrains Mono" font-size="7" fill="#3b82f6">SCK</text>
+          <line x1="640" y1="152" x2="608" y2="152" stroke="#3b82f6" stroke-width="2"/>
+          <text x="642" y="149" font-family="JetBrains Mono" font-size="7" fill="#3b82f6">MOSI</text>
+          <line x1="640" y1="174" x2="608" y2="174" stroke="#3b82f6" stroke-width="2"/>
+          <text x="642" y="171" font-family="JetBrains Mono" font-size="7" fill="#3b82f6">MISO</text>
+          <line x1="640" y1="196" x2="608" y2="196" stroke="#60a5fa" stroke-width="2"/>
+          <text x="642" y="193" font-family="JetBrains Mono" font-size="7" fill="#60a5fa">NSS</text>
+          <line x1="640" y1="218" x2="608" y2="218" stroke="#93c5fd" stroke-width="2"/>
+          <text x="642" y="215" font-family="JetBrains Mono" font-size="7" fill="#93c5fd">RST</text>
+          <line x1="640" y1="240" x2="608" y2="240" stroke="#bfdbfe" stroke-width="2"/>
+          <text x="642" y="237" font-family="JetBrains Mono" font-size="7" fill="#bfdbfe">DIO0</text>
+
+          <!-- VCC + GND for LoRa -->
+          <line x1="640" y1="265" x2="608" y2="265" stroke="#ef4444" stroke-width="2"/>
+          <text x="642" y="262" font-family="JetBrains Mono" font-size="7" fill="#ef4444">VCC (3.3V)</text>
+          <line x1="640" y1="280" x2="608" y2="280" stroke="#374151" stroke-width="2"/>
+          <text x="642" y="277" font-family="JetBrains Mono" font-size="7" fill="#9ca3af">GND</text>
+
+          <!-- SMA antenna symbol on LoRa right side -->
+          <line x1="840" y1="160" x2="880" y2="160" stroke="#60a5fa" stroke-width="3"/>
+          <line x1="880" y1="140" x2="880" y2="180" stroke="#60a5fa" stroke-width="3"/>
+          <line x1="884" y1="148" x2="884" y2="172" stroke="#3b82f6" stroke-width="2"/>
+          <path d="M884,140 Q910,140 930,120 Q950,100 940,130 Q930,160 910,180 Q890,200 880,185" stroke="#60a5fa" stroke-width="1.5" fill="none"/>
+          <text x="920" y="115" font-family="JetBrains Mono" font-size="8" fill="#60a5fa">SMA Antenna</text>
+          <text x="920" y="127" font-family="JetBrains Mono" font-size="7" fill="#3b82f6">915MHz · 3dBi</text>
+
+          <!-- SPI wires from ESP32 to LoRa (connecting junction points) -->
+          <!-- The lines going right from ESP32 at x=600 now connect to LoRa at x=608 -->
+          <path d="M600,130 L608,130" class="wire wire-blue"/>
+          <path d="M600,152 L608,152" class="wire wire-blue"/>
+          <path d="M600,174 L608,174" class="wire wire-blue"/>
+          <path d="M600,196 L608,196" stroke="#60a5fa" stroke-width="2" fill="none"/>
+          <path d="M600,218 L608,218" stroke="#93c5fd" stroke-width="2" fill="none"/>
+          <path d="M600,240 L608,240" stroke="#bfdbfe" stroke-width="2" fill="none"/>
+
+          <!-- VCC 3.3V to LoRa -->
+          <path d="M330,115 L295,115 L295,60 L625,60 L625,265 L608,265" class="wire wire-red" stroke-dasharray="3,2"/>
+          <!-- GND to LoRa -->
+          <path d="M330,135 L292,135 L292,57 L628,57 L628,280 L608,280" class="wire wire-black" stroke-dasharray="3,2"/>
+
+          <!-- ═══════════════════ POWER SYSTEM ═══════════════════ -->
+          <!-- Solar Panel -->
+          <rect x="60" y="420" width="130" height="80" rx="8" fill="#1c1c0a" stroke="#eab308" stroke-width="1.5"/>
+          <text x="125" y="440" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#eab308" font-weight="700">5W Solar Panel</text>
+          <text x="125" y="454" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#ca8a04">6V · 830mA max</text>
+          <!-- Solar cell grid -->
+          <rect x="75" y="460" width="15" height="12" fill="#1e3a00" stroke="#4b5563" stroke-width="0.5"/>
+          <rect x="92" y="460" width="15" height="12" fill="#1e3a00" stroke="#4b5563" stroke-width="0.5"/>
+          <rect x="109" y="460" width="15" height="12" fill="#1e3a00" stroke="#4b5563" stroke-width="0.5"/>
+          <rect x="126" y="460" width="15" height="12" fill="#1e3a00" stroke="#4b5563" stroke-width="0.5"/>
+          <rect x="143" y="460" width="15" height="12" fill="#1e3a00" stroke="#4b5563" stroke-width="0.5"/>
+          <!-- Solar output lines -->
+          <line x1="190" y1="445" x2="230" y2="445" stroke="#eab308" stroke-width="2"/>
+          <line x1="190" y1="460" x2="230" y2="460" stroke="#374151" stroke-width="2"/>
+          <text x="192" y="441" font-family="JetBrains Mono" font-size="7" fill="#eab308">+6V</text>
+          <text x="192" y="475" font-family="JetBrains Mono" font-size="7" fill="#9ca3af">GND</text>
+
+          <!-- TP4056 -->
+          <rect x="245" y="415" width="120" height="90" rx="8" fill="#1a1a2e" stroke="#f97316" stroke-width="1.5"/>
+          <text x="305" y="438" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#fb923c" font-weight="700">TP4056</text>
+          <text x="305" y="452" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#f97316">Charge Controller</text>
+          <text x="305" y="466" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#6b7280">+ DW01A protection</text>
+          <!-- TP4056 pins -->
+          <text x="247" y="485" font-family="JetBrains Mono" font-size="7" fill="#eab308">IN+</text>
+          <text x="247" y="497" font-family="JetBrains Mono" font-size="7" fill="#9ca3af">IN-</text>
+          <text x="330" y="485" font-family="JetBrains Mono" font-size="7" fill="#ef4444">B+</text>
+          <text x="330" y="497" font-family="JetBrains Mono" font-size="7" fill="#9ca3af">B-</text>
+          <!-- Solar to TP4056 -->
+          <path d="M230,445 L247,445 L247,482" stroke="#eab308" stroke-width="2" fill="none"/>
+          <path d="M230,460 L240,460 L240,495" stroke="#374151" stroke-width="2" fill="none"/>
+
+          <!-- 18650 Battery -->
+          <rect x="420" y="415" width="120" height="90" rx="8" fill="#1a2e1a" stroke="#22c55e" stroke-width="1.5"/>
+          <text x="480" y="438" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#86efac" font-weight="700">18650 Li-ion</text>
+          <text x="480" y="452" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#86efac">NCR18650B 3400mAh</text>
+          <text x="480" y="466" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#4b7c54">3.7V nominal</text>
+          <!-- Battery symbol -->
+          <rect x="455" y="470" width="50" height="20" rx="2" fill="#0d2b1e" stroke="#22c55e" stroke-width="1"/>
+          <rect x="455" y="470" width="32" height="20" rx="1" fill="#22c55e" opacity="0.6"/>
+          <rect x="505" y="476" width="5" height="8" rx="1" fill="#22c55e"/>
+          <!-- TP4056 B+ → Battery + -->
+          <path d="M365,482 L420,482" stroke="#ef4444" stroke-width="2" fill="none"/>
+          <text x="370" y="478" font-family="JetBrains Mono" font-size="7" fill="#ef4444">BAT+</text>
+          <path d="M365,495 L420,495" stroke="#374151" stroke-width="2" fill="none"/>
+
+          <!-- MT3608 Boost -->
+          <rect x="600" y="415" width="120" height="90" rx="8" fill="#2a1a2e" stroke="#a855f7" stroke-width="1.5"/>
+          <text x="660" y="438" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc" font-weight="700">MT3608</text>
+          <text x="660" y="452" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#a855f7">Boost Converter</text>
+          <text x="660" y="466" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#6b7280">3.7V → 5V regulated</text>
+          <!-- Battery to boost -->
+          <path d="M540,460 L600,460" stroke="#ef4444" stroke-width="2" fill="none"/>
+          <path d="M540,475 L595,475 L595,470" stroke="#374151" stroke-width="2" fill="none"/>
+          <!-- Boost output to ESP32 VIN -->
+          <path d="M720,460 L760,460 L760,310 L620,310 L620,310 L570,310" class="wire wire-red"/>
+          <text x="730" y="456" font-family="JetBrains Mono" font-size="7" fill="#ef4444">5V to VIN</text>
+          <path d="M720,475 L760,475 L760,340 L615,340 L615,330 L570,330" class="wire wire-black"/>
+
+          <!-- Labels -->
+          <text x="60" y="415" font-family="JetBrains Mono" font-size="8" fill="#eab308">⚡ POWER SUBSYSTEM</text>
+          <text x="350" y="415" font-family="JetBrains Mono" font-size="8" fill="#86efac">🔋 ENERGY STORAGE</text>
+          <text x="600" y="415" font-family="JetBrains Mono" font-size="8" fill="#c084fc">🔌 VOLTAGE REGULATION</text>
+
+          <!-- ═══════════════════ ENCLOSURE OUTLINE ═══════════════════ -->
+          <rect x="330" y="52" width="260" height="380" rx="12" fill="none" stroke="#40916c" stroke-width="1" stroke-dasharray="8,4" opacity="0.5"/>
+          <text x="460" y="447" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#40916c" opacity="0.7">— IP65 Enclosure boundary —</text>
+
+          <!-- LEGEND -->
+          <rect x="30" y="580" width="940" height="65" rx="8" fill="#0d1117" stroke="#1e3a28" stroke-width="1"/>
+          <text x="50" y="598" font-family="JetBrains Mono" font-size="8" fill="#f4a61d" font-weight="700">CONNECTION LEGEND:</text>
+          <circle cx="175" cy="595" r="4" fill="#ef4444"/>
+          <text x="183" y="599" font-family="JetBrains Mono" font-size="7" fill="#ef4444">Power (3.3V / 5V)</text>
+          <circle cx="310" cy="595" r="4" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+          <text x="318" y="599" font-family="JetBrains Mono" font-size="7" fill="#9ca3af">Ground (GND)</text>
+          <circle cx="445" cy="595" r="4" fill="#22c55e"/>
+          <text x="453" y="599" font-family="JetBrains Mono" font-size="7" fill="#22c55e">Digital Signal</text>
+          <circle cx="560" cy="595" r="4" fill="#eab308"/>
+          <text x="568" y="599" font-family="JetBrains Mono" font-size="7" fill="#eab308">Analog Signal</text>
+          <circle cx="670" cy="595" r="4" fill="#3b82f6"/>
+          <text x="678" y="599" font-family="JetBrains Mono" font-size="7" fill="#3b82f6">SPI Bus (LoRa)</text>
+          <circle cx="780" cy="595" r="4" fill="#a855f7"/>
+          <text x="788" y="599" font-family="JetBrains Mono" font-size="7" fill="#a855f7">Power Rail</text>
+          <!-- row 2 -->
+          <line x1="150" y1="625" x2="175" y2="625" stroke="#ef4444" stroke-width="2" stroke-dasharray="3,2"/>
+          <text x="178" y="629" font-family="JetBrains Mono" font-size="7" fill="#ef4444">Shared power (dashed)</text>
+          <line x1="330" y1="625" x2="355" y2="625" stroke="#40916c" stroke-width="1" stroke-dasharray="6,3"/>
+          <text x="358" y="629" font-family="JetBrains Mono" font-size="7" fill="#40916c">Enclosure boundary (dashed)</text>
+          <text x="600" y="629" font-family="JetBrains Mono" font-size="7" fill="#6b7280">NOTE: All resistors 1/4W · All caps ceramic 50V · GPIO34 is INPUT-ONLY (ADC)</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TAB 4: PIN CONNECTIONS TABLE
+════════════════════════════════════════════════════════ -->
+<div id="tab-pinout" class="page">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+    <!-- ESP32 to Sensors -->
+    <div class="card">
+      <h3 class="font-bold mb-4" style="color:var(--green-dark)"><i class="fas fa-plug mr-2" style="color:var(--yellow)"></i>ESP32 → Soil Moisture Sensor (v1.2)</h3>
+      <table class="w-full" style="border-radius:10px;overflow:hidden">
+        <thead><tr style="background:var(--green-dark)">
+          <th class="text-left text-white text-xs p-2 font-semibold">ESP32 Pin</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">GPIO</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">Sensor Pin</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">Wire</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">Notes</th>
+        </tr></thead>
+        <tbody>
+          <tr class="pin-row"><td class="pin-num text-red-600">3.3V</td><td class="pin-num">—</td><td class="font-medium">VCC</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#ef4444"></span>Red</td><td class="text-gray-500 text-xs">3.3V power supply</td></tr>
+          <tr class="pin-row" style="background:#f9f9f9"><td class="pin-num text-gray-500">GND</td><td class="pin-num">—</td><td class="font-medium">GND</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#374151"></span>Black</td><td class="text-gray-500 text-xs">Common ground</td></tr>
+          <tr class="pin-row"><td class="pin-num text-yellow-600">VP/36</td><td class="pin-num text-yellow-600">GPIO34</td><td class="font-medium">AOUT</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#eab308"></span>Yellow</td><td class="text-gray-500 text-xs">ADC1_CH6 — INPUT ONLY, no pull-up</td></tr>
+        </tbody>
+      </table>
+      <div class="mt-3 p-2 rounded-lg text-xs" style="background:#fffbeb;color:#92400e">
+        ⚠️ GPIO34 is <strong>input-only</strong>. Do NOT use GPIO35/36/39 with internal pull-up. Wet soil reads ~800–1100 ADC raw; dry soil reads ~2700–3000.
+      </div>
+    </div>
+
+    <!-- ESP32 to DHT22 -->
+    <div class="card">
+      <h3 class="font-bold mb-4" style="color:var(--green-dark)"><i class="fas fa-thermometer-half mr-2" style="color:var(--yellow)"></i>ESP32 → DHT22 Temperature/Humidity</h3>
+      <table class="w-full" style="border-radius:10px;overflow:hidden">
+        <thead><tr style="background:var(--green-dark)">
+          <th class="text-left text-white text-xs p-2 font-semibold">ESP32 Pin</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">GPIO</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">DHT22 Pin</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">Wire</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">Notes</th>
+        </tr></thead>
+        <tbody>
+          <tr class="pin-row"><td class="pin-num text-red-600">3.3V</td><td class="pin-num">—</td><td class="font-medium">Pin 1 (VCC)</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#ef4444"></span>Red</td><td class="text-gray-500 text-xs">3.3V power</td></tr>
+          <tr class="pin-row" style="background:#f9f9f9"><td class="pin-num text-green-600">D4</td><td class="pin-num text-green-600">GPIO4</td><td class="font-medium">Pin 2 (DATA)</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#22c55e"></span>Green</td><td class="text-gray-500 text-xs">Single-wire. Add 10kΩ pull-up to 3.3V!</td></tr>
+          <tr class="pin-row"><td class="pin-num text-gray-400">—</td><td class="pin-num">—</td><td class="font-medium">Pin 3 (NC)</td><td>—</td><td class="text-gray-500 text-xs">Not connected</td></tr>
+          <tr class="pin-row" style="background:#f9f9f9"><td class="pin-num text-gray-500">GND</td><td class="pin-num">—</td><td class="font-medium">Pin 4 (GND)</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#374151"></span>Black</td><td class="text-gray-500 text-xs">Common ground</td></tr>
+        </tbody>
+      </table>
+      <div class="mt-3 p-2 rounded-lg text-xs" style="background:#f0fdf4;color:#065f46">
+        ✅ <strong>Required:</strong> Place 10kΩ resistor between DATA (GPIO4) and 3.3V rail. Without it, sensor won't communicate.
+      </div>
+    </div>
+
+    <!-- ESP32 to LoRa SPI -->
+    <div class="card">
+      <h3 class="font-bold mb-4" style="color:var(--green-dark)"><i class="fas fa-broadcast-tower mr-2" style="color:var(--yellow)"></i>ESP32 → EBYTE E32 LoRa Module (SPI)</h3>
+      <table class="w-full" style="border-radius:10px;overflow:hidden">
+        <thead><tr style="background:var(--green-dark)">
+          <th class="text-left text-white text-xs p-2 font-semibold">ESP32 Pin</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">GPIO</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">LoRa Pin</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">Wire</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">Function</th>
+        </tr></thead>
+        <tbody>
+          <tr class="pin-row"><td class="pin-num text-red-600">3.3V</td><td>—</td><td class="font-medium">VCC</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#ef4444"></span>Red</td><td class="text-gray-500 text-xs">3.3V only! Never 5V</td></tr>
+          <tr class="pin-row" style="background:#f9f9f9"><td class="pin-num text-gray-500">GND</td><td>—</td><td class="font-medium">GND</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#374151"></span>Black</td><td class="text-gray-500 text-xs">Common ground</td></tr>
+          <tr class="pin-row"><td class="pin-num text-blue-600">D18</td><td class="pin-num text-blue-600">GPIO18</td><td class="font-medium">SCK</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#3b82f6"></span>Blue</td><td class="text-gray-500 text-xs">SPI Clock</td></tr>
+          <tr class="pin-row" style="background:#f9f9f9"><td class="pin-num text-blue-600">D23</td><td class="pin-num text-blue-600">GPIO23</td><td class="font-medium">MOSI</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#3b82f6"></span>Blue</td><td class="text-gray-500 text-xs">Master Out Slave In</td></tr>
+          <tr class="pin-row"><td class="pin-num text-blue-600">D19</td><td class="pin-num text-blue-600">GPIO19</td><td class="font-medium">MISO</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#3b82f6"></span>Blue</td><td class="text-gray-500 text-xs">Master In Slave Out</td></tr>
+          <tr class="pin-row" style="background:#f9f9f9"><td class="pin-num text-blue-400">D15</td><td class="pin-num text-blue-400">GPIO15</td><td class="font-medium">NSS/CS</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#60a5fa"></span>Lt Blue</td><td class="text-gray-500 text-xs">Chip Select (active low)</td></tr>
+          <tr class="pin-row"><td class="pin-num text-sky-400">D2</td><td class="pin-num text-sky-400">GPIO2</td><td class="font-medium">RESET</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#93c5fd"></span>Sky</td><td class="text-gray-500 text-xs">Module reset (active low)</td></tr>
+          <tr class="pin-row" style="background:#f9f9f9"><td class="pin-num" style="color:#bfdbfe">D26</td><td class="pin-num" style="color:#bfdbfe">GPIO26</td><td class="font-medium">DIO0</td><td><span class="inline-block w-3 h-3 rounded-full mr-1" style="background:#bfdbfe"></span>White</td><td class="text-gray-500 text-xs">TX Done / RX Done IRQ</td></tr>
+        </tbody>
+      </table>
+      <div class="mt-3 p-2 rounded-lg text-xs" style="background:#eff6ff;color:#1e40af">
+        📡 <strong>Library:</strong> Use <code>LoRa.h</code> by Sandeep Mistry or <code>RadioLib</code> library. Set frequency to 915000000 for Zimbabwe/Africa band.
+      </div>
+    </div>
+
+    <!-- Power connections -->
+    <div class="card">
+      <h3 class="font-bold mb-4" style="color:var(--green-dark)"><i class="fas fa-bolt mr-2" style="color:var(--yellow)"></i>Power System Connections</h3>
+      <table class="w-full" style="border-radius:10px;overflow:hidden">
+        <thead><tr style="background:var(--green-dark)">
+          <th class="text-left text-white text-xs p-2 font-semibold">From</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">Pin</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">To</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">Pin</th>
+          <th class="text-left text-white text-xs p-2 font-semibold">Notes</th>
+        </tr></thead>
+        <tbody>
+          <tr class="pin-row"><td class="font-medium">Solar Panel</td><td class="pin-num text-yellow-600">+ (6V)</td><td class="font-medium">TP4056</td><td class="pin-num">IN+</td><td class="text-gray-500 text-xs">Solar charges battery</td></tr>
+          <tr class="pin-row" style="background:#f9f9f9"><td class="font-medium">Solar Panel</td><td class="pin-num text-gray-500">–</td><td class="font-medium">TP4056</td><td class="pin-num">IN–</td><td class="text-gray-500 text-xs">Ground loop</td></tr>
+          <tr class="pin-row"><td class="font-medium">TP4056</td><td class="pin-num text-red-600">B+</td><td class="font-medium">18650 Battery</td><td class="pin-num">+ terminal</td><td class="text-gray-500 text-xs">Battery charge/discharge</td></tr>
+          <tr class="pin-row" style="background:#f9f9f9"><td class="font-medium">TP4056</td><td class="pin-num text-gray-500">B–</td><td class="font-medium">18650 Battery</td><td class="pin-num">– terminal</td><td class="text-gray-500 text-xs">Battery negative</td></tr>
+          <tr class="pin-row"><td class="font-medium">18650 Battery</td><td class="pin-num text-red-600">+ (3.7V)</td><td class="font-medium">MT3608 IN+</td><td class="pin-num">IN+</td><td class="text-gray-500 text-xs">Boost converts to 5V</td></tr>
+          <tr class="pin-row" style="background:#f9f9f9"><td class="font-medium">MT3608</td><td class="pin-num text-red-600">OUT+ (5V)</td><td class="font-medium">ESP32</td><td class="pin-num text-red-600">VIN</td><td class="text-gray-500 text-xs">Regulated 5V to MCU</td></tr>
+          <tr class="pin-row"><td class="font-medium">MT3608</td><td class="pin-num text-gray-500">GND</td><td class="font-medium">ESP32</td><td class="pin-num text-gray-500">GND</td><td class="text-gray-500 text-xs">Common ground</td></tr>
+        </tbody>
+      </table>
+      <div class="mt-3 p-2 rounded-lg text-xs" style="background:#fdf4ff;color:#7e22ce">
+        🔋 <strong>Runtime:</strong> 3400mAh × 3.7V ÷ 5V ÷ 80mA avg ≈ <strong>~31 hours</strong> no sun. With deep sleep (15-min cycles) avg drops to ~5mA → <strong>~10 days</strong> on battery alone!
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TAB 5: POWER SYSTEM
+════════════════════════════════════════════════════════ -->
+<div id="tab-power" class="page">
+  <div class="card mb-5">
+    <h2 class="text-lg font-bold mb-4" style="color:var(--green-dark)"><i class="fas fa-solar-panel mr-2" style="color:var(--yellow)"></i>Solar Power System Design</h2>
+    <div class="flex items-center flex-wrap gap-3 mb-6">
+      <div class="flow-box" style="background:#1c1c0a;border:2px solid #eab308;color:#eab308;min-width:120px">
+        <div class="text-2xl mb-1">☀️</div>
+        <div class="font-bold text-sm">Solar Panel</div>
+        <div class="text-xs">5W · 6V · 830mA</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:#1a1a2e;border:2px solid #f97316;color:#f97316;min-width:120px">
+        <div class="text-2xl mb-1">⚡</div>
+        <div class="font-bold text-sm">TP4056</div>
+        <div class="text-xs">1A charge controller</div>
+        <div class="text-xs">Overcharge protection</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:#1a2e1a;border:2px solid #22c55e;color:#22c55e;min-width:120px">
+        <div class="text-2xl mb-1">🔋</div>
+        <div class="font-bold text-sm">18650 Battery</div>
+        <div class="text-xs">3.7V · 3400mAh</div>
+        <div class="text-xs">12.6Wh stored</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:#2a1a2e;border:2px solid #a855f7;color:#a855f7;min-width:120px">
+        <div class="text-2xl mb-1">🔌</div>
+        <div class="font-bold text-sm">MT3608 Boost</div>
+        <div class="text-xs">3.7V → 5V</div>
+        <div class="text-xs">2A rated</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:#1a3a20;border:2px solid #40916c;color:#86efac;min-width:120px">
+        <div class="text-2xl mb-1">🔲</div>
+        <div class="font-bold text-sm">ESP32</div>
+        <div class="text-xs">Active: 240mA</div>
+        <div class="text-xs">Deep Sleep: 10µA</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="p-4 rounded-xl" style="background:#1c1c0a;border:1px solid #eab308">
+        <div class="font-bold mb-2" style="color:#eab308"><i class="fas fa-sun mr-2"></i>Solar Production</div>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between"><span class="text-gray-400">Panel rating</span><span class="text-yellow-400 font-bold">5W / 6V</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Peak current</span><span class="text-yellow-400 font-bold">830mA</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Zimbabwe sun hours</span><span class="text-yellow-400 font-bold">5–8 hrs/day</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Daily production</span><span class="text-yellow-400 font-bold">25–40 Wh</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Tilt angle</span><span class="text-yellow-400 font-bold">15–20° North</span></div>
+        </div>
+      </div>
+      <div class="p-4 rounded-xl" style="background:#1a2e1a;border:1px solid #22c55e">
+        <div class="font-bold mb-2" style="color:#86efac"><i class="fas fa-battery-full mr-2"></i>Battery Specs</div>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between"><span class="text-gray-400">Cell type</span><span class="text-green-400 font-bold">NCR18650B</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Capacity</span><span class="text-green-400 font-bold">3400mAh</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Voltage range</span><span class="text-green-400 font-bold">2.5V – 4.2V</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Full charge time</span><span class="text-green-400 font-bold">~4 hours</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Stored energy</span><span class="text-green-400 font-bold">12.6 Wh</span></div>
+        </div>
+      </div>
+      <div class="p-4 rounded-xl" style="background:#0d1a2e;border:1px solid #3b82f6">
+        <div class="font-bold mb-2 text-blue-300"><i class="fas fa-microchip mr-2"></i>Power Consumption</div>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between"><span class="text-gray-400">ESP32 active</span><span class="text-blue-400 font-bold">240mA @ 5V</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">LoRa transmitting</span><span class="text-blue-400 font-bold">+120mA</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Sensors active</span><span class="text-blue-400 font-bold">+8mA</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Deep sleep total</span><span class="text-green-400 font-bold">~10µA</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">15-min cycle avg</span><span class="text-green-400 font-bold">~5mA avg</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Power budget table -->
+  <div class="card">
+    <h3 class="font-bold mb-4" style="color:var(--green-dark)"><i class="fas fa-calculator mr-2" style="color:var(--yellow)"></i>Daily Power Budget (15-Minute Sensor Cycle)</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full bom-table" style="border-radius:12px;overflow:hidden">
+        <thead><tr>
+          <th class="text-left">Operation Phase</th>
+          <th class="text-center">Duration</th>
+          <th class="text-center">Current Draw</th>
+          <th class="text-center">Times/Day</th>
+          <th class="text-right">Energy/Day</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>Wake + Boot ESP32</td><td class="text-center">500ms</td><td class="text-center">200mA</td><td class="text-center">96×</td><td class="text-right">2.67 mAh</td></tr>
+          <tr><td>Read Soil Sensor (ADC)</td><td class="text-center">200ms</td><td class="text-center">80mA</td><td class="text-center">96×</td><td class="text-right">0.43 mAh</td></tr>
+          <tr><td>Read DHT22</td><td class="text-center">300ms</td><td class="text-center">90mA</td><td class="text-center">96×</td><td class="text-right">0.72 mAh</td></tr>
+          <tr><td>LoRa Transmit Packet</td><td class="text-center">200ms</td><td class="text-center">360mA</td><td class="text-center">96×</td><td class="text-right">1.92 mAh</td></tr>
+          <tr><td>LoRa Receive ACK</td><td class="text-center">500ms</td><td class="text-center">100mA</td><td class="text-center">96×</td><td class="text-right">1.33 mAh</td></tr>
+          <tr><td>Deep Sleep</td><td class="text-center">14.98 min</td><td class="text-center">0.01mA</td><td class="text-center">96×</td><td class="text-right">0.24 mAh</td></tr>
+          <tr class="total-row"><td class="font-bold">TOTAL DAILY CONSUMPTION</td><td></td><td></td><td></td><td class="text-right font-bold text-lg">~7.3 mAh/day</td></tr>
+          <tr class="total-row"><td class="font-bold text-gray-600">Battery Backup (3400mAh ÷ 7.3mAh)</td><td></td><td></td><td></td><td class="text-right font-bold text-gray-600">~465 days theoretical</td></tr>
+          <tr class="total-row"><td class="font-bold text-gray-600">Practical backup (60% efficiency)</td><td></td><td></td><td></td><td class="text-right font-bold" style="color:var(--green-dark)">~10–14 days no sun</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TAB 6: ASSEMBLY GUIDE
+════════════════════════════════════════════════════════ -->
+<div id="tab-assembly" class="page">
+  <div class="card mb-5">
+    <h2 class="text-lg font-bold mb-5" style="color:var(--green-dark)"><i class="fas fa-tools mr-2" style="color:var(--yellow)"></i>Step-by-Step Assembly Guide</h2>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Left column: steps 1-6 -->
+      <div>
+        <!-- Step 1 -->
+        <div class="flex gap-3 mb-4">
+          <div>
+            <div class="step-num" style="background:var(--green-dark);color:white">1</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="flex-1 pb-4">
+            <div class="font-bold text-gray-800 mb-1">Gather & Verify Components</div>
+            <div class="text-sm text-gray-600 mb-2">Before soldering, test each component on a breadboard. Use a multimeter to check voltages.</div>
+            <div class="p-3 rounded-lg text-xs space-y-1" style="background:#f0fdf4">
+              <div>✅ ESP32 boots and connects to Arduino IDE</div>
+              <div>✅ Soil sensor reads 0–3V analog output</div>
+              <div>✅ DHT22 responds to digital reads</div>
+              <div>✅ LoRa module detected on SPI bus</div>
+              <div>✅ Solar panel outputs 5–7V in sunlight</div>
+              <div>✅ TP4056 charges 18650 correctly</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="flex gap-3 mb-4">
+          <div>
+            <div class="step-num" style="background:#b45309;color:white">2</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="flex-1 pb-4">
+            <div class="font-bold text-gray-800 mb-1">Breadboard Prototype & Test</div>
+            <div class="text-sm text-gray-600 mb-2">Wire all components on a breadboard first. Flash test firmware and verify all sensor readings.</div>
+            <div class="p-3 rounded-lg text-xs" style="background:#fffbeb">
+              <div class="font-bold mb-1 text-yellow-800">⚡ Key Tests:</div>
+              <div class="text-yellow-700">• Serial monitor shows soil % and temp/humidity values</div>
+              <div class="text-yellow-700">• LoRa transmits packets (check with serial plotter)</div>
+              <div class="text-yellow-700">• Deep sleep current drops to &lt;1mA (measure with meter)</div>
+              <div class="text-yellow-700">• Power system charges battery from solar panel</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="flex gap-3 mb-4">
+          <div>
+            <div class="step-num" style="background:#1e40af;color:white">3</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="flex-1 pb-4">
+            <div class="font-bold text-gray-800 mb-1">Solder on Perfboard / PCB</div>
+            <div class="text-sm text-gray-600 mb-2">Transfer from breadboard to perfboard using solid-core wire. Keep power rails clean.</div>
+            <div class="p-3 rounded-lg text-xs space-y-1" style="background:#eff6ff">
+              <div>📌 Use 22AWG silicone wire for flexibility</div>
+              <div>📌 Solder TP4056 and MT3608 separately on sub-board</div>
+              <div>📌 Use pin headers for ESP32 (removable for flashing)</div>
+              <div>📌 Add 100nF caps near each VCC pin</div>
+              <div>📌 Label all wire ends with heat-shrink marker</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="flex gap-3 mb-4">
+          <div>
+            <div class="step-num" style="background:#065f46;color:white">4</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="flex-1 pb-4">
+            <div class="font-bold text-gray-800 mb-1">Prepare IP65 Enclosure</div>
+            <div class="text-sm text-gray-600 mb-2">Drill holes for cable glands, LED indicator, and antenna SMA connector.</div>
+            <div class="p-3 rounded-lg text-xs space-y-1" style="background:#f0fdf4">
+              <div>🔧 Drill 16mm hole for soil sensor cable gland (bottom)</div>
+              <div>🔧 Drill 16mm hole for solar panel cable entry (top)</div>
+              <div>🔧 Drill 5mm hole for SMA antenna connector (side)</div>
+              <div>🔧 Drill 4mm hole for 3mm LED indicator (lid)</div>
+              <div>🔧 Apply silicone sealant around all penetrations</div>
+              <div>🔧 Mount DIN rail or standoffs inside for PCB</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: steps 5-8 -->
+      <div>
+        <!-- Step 5 -->
+        <div class="flex gap-3 mb-4">
+          <div>
+            <div class="step-num" style="background:#7c3aed;color:white">5</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="flex-1 pb-4">
+            <div class="font-bold text-gray-800 mb-1">Install PCB in Enclosure</div>
+            <div class="text-sm text-gray-600 mb-2">Mount the PCB using M3 nylon standoffs. Secure the 18650 battery holder.</div>
+            <div class="p-3 rounded-lg text-xs space-y-1" style="background:#fdf4ff">
+              <div>📦 PCB mounts on 4× M3×10mm nylon standoffs</div>
+              <div>📦 Battery holder fixed with M2 screws to enclosure base</div>
+              <div>📦 Connect antenna SMA through drilled hole</div>
+              <div>📦 Feed soil sensor cable through cable gland</div>
+              <div>📦 Tighten cable glands to maintain IP65 rating</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="flex gap-3 mb-4">
+          <div>
+            <div class="step-num" style="background:#b45309;color:white">6</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="flex-1 pb-4">
+            <div class="font-bold text-gray-800 mb-1">Prepare & Install Field Post</div>
+            <div class="text-sm text-gray-600 mb-2">Drive treated wood post 40cm into soil. Mount enclosure and solar panel on post.</div>
+            <div class="p-3 rounded-lg text-xs space-y-1" style="background:#fff7ed">
+              <div>🪵 Post should stand 80cm above soil level</div>
+              <div>🪵 Mount enclosure at 60–70cm height (avoid splash)</div>
+              <div>🪵 Solar panel at top, tilted 15–20° facing North (Zimbabwe)</div>
+              <div>🪵 Use galvanised L-bracket + M6 stainless bolts</div>
+              <div>🪵 Apply wood preservative / used engine oil to post base</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 7 -->
+        <div class="flex gap-3 mb-4">
+          <div>
+            <div class="step-num" style="background:#065f46;color:white">7</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="flex-1 pb-4">
+            <div class="font-bold text-gray-800 mb-1">Insert Soil Probe & Calibrate</div>
+            <div class="text-sm text-gray-600 mb-2">Insert soil sensor probe 5–8cm deep near plant root zone. Calibrate for your soil type.</div>
+            <div class="p-3 rounded-lg text-xs space-y-1" style="background:#f0fdf4">
+              <div>🌱 Insert probe at 45° angle, 5–8cm depth</div>
+              <div>🌱 Take reading in bone-dry soil (note raw ADC value ≈ 2950)</div>
+              <div>🌱 Submerge probe in water (note raw ADC value ≈ 1200)</div>
+              <div>🌱 Map these to 0–100% in firmware map() function</div>
+              <div>🌱 Set crop thresholds: Maize=30-70%, Tobacco=25-65%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 8 -->
+        <div class="flex gap-3 mb-4">
+          <div>
+            <div class="step-num" style="background:var(--green-dark);color:white">8</div>
+          </div>
+          <div class="flex-1">
+            <div class="font-bold text-gray-800 mb-1">Final Power-On & Cloud Verify</div>
+            <div class="text-sm text-gray-600 mb-2">Power on the node and verify data appears in the AquaSense dashboard.</div>
+            <div class="p-3 rounded-lg text-xs space-y-1" style="background:#f0fdf4">
+              <div>✅ Green LED blinks on each LoRa transmission</div>
+              <div>✅ Dashboard shows new sensor node appearing</div>
+              <div>✅ Soil moisture, temperature, humidity readings live</div>
+              <div>✅ Battery level reporting correctly</div>
+              <div>✅ Node enters deep sleep between transmissions</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tools needed -->
+    <div class="mt-4 p-4 rounded-xl" style="background:#f7faf7;border:1px solid #eef4ee">
+      <div class="font-bold mb-2" style="color:var(--green-dark)"><i class="fas fa-wrench mr-2" style="color:var(--yellow)"></i>Tools Required</div>
+      <div class="flex flex-wrap gap-2 text-sm text-gray-600">
+        <span class="px-2 py-1 bg-white rounded-lg border">🔧 Soldering iron (30–40W)</span>
+        <span class="px-2 py-1 bg-white rounded-lg border">⚡ Multimeter</span>
+        <span class="px-2 py-1 bg-white rounded-lg border">💻 Laptop with Arduino IDE</span>
+        <span class="px-2 py-1 bg-white rounded-lg border">🪛 Screwdrivers (Phillips + flat)</span>
+        <span class="px-2 py-1 bg-white rounded-lg border">🔩 Drill + 4/5/16mm bits</span>
+        <span class="px-2 py-1 bg-white rounded-lg border">✂️ Wire stripper + cutters</span>
+        <span class="px-2 py-1 bg-white rounded-lg border">🔥 Heat gun / lighter (heat shrink)</span>
+        <span class="px-2 py-1 bg-white rounded-lg border">🔬 Breadboard + jumper wires</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TAB 7: GATEWAY NODE
+════════════════════════════════════════════════════════ -->
+<div id="tab-gateway" class="page">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="card">
+      <h2 class="text-lg font-bold mb-4" style="color:var(--green-dark)"><i class="fas fa-broadcast-tower mr-2" style="color:var(--yellow)"></i>RAK7268 LoRaWAN Gateway Setup</h2>
+      <div class="p-4 mb-4 rounded-xl" style="background:linear-gradient(135deg,#1a4731,#2d6a4f);color:white">
+        <div class="font-bold text-lg mb-1">RAK7268 WisGate Edge Lite 2</div>
+        <div class="text-green-200 text-sm mb-3">8-channel indoor LoRaWAN gateway with Ethernet + optional 4G LTE</div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div><span class="text-green-300">Channels:</span> 8 (configurable)</div>
+          <div><span class="text-green-300">Frequency:</span> 915MHz (AU915)</div>
+          <div><span class="text-green-300">TX Power:</span> 27dBm</div>
+          <div><span class="text-green-300">Range:</span> ~10km open field</div>
+          <div><span class="text-green-300">Backhaul:</span> Ethernet + 4G LTE</div>
+          <div><span class="text-green-300">Protocol:</span> LoRaWAN 1.0.3</div>
+          <div><span class="text-green-300">Power:</span> 12V DC adapter</div>
+          <div><span class="text-green-300">Housing:</span> Plastic, indoor</div>
+        </div>
+      </div>
+      <h4 class="font-bold mb-2 text-sm" style="color:var(--green-dark)">Gateway Installation Steps:</h4>
+      <div class="space-y-2 text-sm">
+        <div class="flex gap-2 p-2 rounded-lg" style="background:#f0fdf4">
+          <span class="font-bold text-green-700 flex-shrink-0">1.</span>
+          <span>Mount gateway in farmhouse/barn, connect Ethernet to router OR insert Econet/NetOne SIM for 4G</span>
+        </div>
+        <div class="flex gap-2 p-2 rounded-lg" style="background:#f0fdf4">
+          <span class="font-bold text-green-700 flex-shrink-0">2.</span>
+          <span>Access gateway web UI at 192.168.1.1, configure LoRa server to point to <strong>The Things Network (TTN)</strong> — free cloud LoRaWAN server</span>
+        </div>
+        <div class="flex gap-2 p-2 rounded-lg" style="background:#f0fdf4">
+          <span class="font-bold text-green-700 flex-shrink-0">3.</span>
+          <span>Register gateway on TTN console (console.thethingsnetwork.org), add each sensor node as TTN device with OTAA keys</span>
+        </div>
+        <div class="flex gap-2 p-2 rounded-lg" style="background:#f0fdf4">
+          <span class="font-bold text-green-700 flex-shrink-0">4.</span>
+          <span>Set up TTN webhook to POST sensor data to AquaSense Zimbabwe dashboard API endpoint</span>
+        </div>
+        <div class="flex gap-2 p-2 rounded-lg" style="background:#f0fdf4">
+          <span class="font-bold text-green-700 flex-shrink-0">5.</span>
+          <span>Install outdoor 5dBi antenna on roof, connect via SMA cable for extended 10km coverage across farm</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="font-bold mb-4" style="color:var(--green-dark)"><i class="fas fa-code mr-2" style="color:var(--yellow)"></i>Firmware Sample Code (Arduino/ESP32)</h3>
+      <div class="rounded-xl p-4 overflow-x-auto" style="background:#0d1117;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7">
+        <div style="color:#8b949e">// AquaSense Zimbabwe — Sensor Node Firmware</div>
+        <div style="color:#8b949e">// ESP32 + LoRa + DHT22 + Soil Moisture</div>
+        <br/>
+        <div><span style="color:#ff7b72">#include</span> <span style="color:#a5d6ff">&lt;LoRa.h&gt;</span></div>
+        <div><span style="color:#ff7b72">#include</span> <span style="color:#a5d6ff">&lt;DHT.h&gt;</span></div>
+        <div><span style="color:#ff7b72">#include</span> <span style="color:#a5d6ff">&lt;esp_sleep.h&gt;</span></div>
+        <br/>
+        <div><span style="color:#8b949e">// Pin Definitions</span></div>
+        <div><span style="color:#ff7b72">#define</span> <span style="color:#79c0ff">SOIL_PIN</span>  <span style="color:#a5d6ff">34</span>  <span style="color:#8b949e">// ADC GPIO34</span></div>
+        <div><span style="color:#ff7b72">#define</span> <span style="color:#79c0ff">DHT_PIN</span>   <span style="color:#a5d6ff">4</span>   <span style="color:#8b949e">// GPIO4</span></div>
+        <div><span style="color:#ff7b72">#define</span> <span style="color:#79c0ff">LORA_SCK</span>  <span style="color:#a5d6ff">18</span></div>
+        <div><span style="color:#ff7b72">#define</span> <span style="color:#79c0ff">LORA_MISO</span> <span style="color:#a5d6ff">19</span></div>
+        <div><span style="color:#ff7b72">#define</span> <span style="color:#79c0ff">LORA_MOSI</span> <span style="color:#a5d6ff">23</span></div>
+        <div><span style="color:#ff7b72">#define</span> <span style="color:#79c0ff">LORA_NSS</span>  <span style="color:#a5d6ff">15</span></div>
+        <div><span style="color:#ff7b72">#define</span> <span style="color:#79c0ff">LORA_RST</span>  <span style="color:#a5d6ff">2</span></div>
+        <div><span style="color:#ff7b72">#define</span> <span style="color:#79c0ff">LORA_DIO0</span> <span style="color:#a5d6ff">26</span></div>
+        <div><span style="color:#ff7b72">#define</span> <span style="color:#79c0ff">SLEEP_US</span> <span style="color:#a5d6ff">15</span> * <span style="color:#a5d6ff">60</span> * <span style="color:#a5d6ff">1000000</span></div>
+        <br/>
+        <div><span style="color:#ff7b72">const char*</span> <span style="color:#79c0ff">FIELD_ID</span> = <span style="color:#a5d6ff">"F1"</span>;</div>
+        <br/>
+        <div><span style="color:#ff7b72">DHT</span> dht(DHT_PIN, DHT22);</div>
+        <br/>
+        <div><span style="color:#ff7b72">void</span> <span style="color:#d2a8ff">setup</span>() {</div>
+        <div>  Serial.begin(<span style="color:#a5d6ff">115200</span>);</div>
+        <div>  dht.begin();</div>
+        <div>  <span style="color:#8b949e">// Init LoRa</span></div>
+        <div>  LoRa.setPins(LORA_NSS, LORA_RST, LORA_DIO0);</div>
+        <div>  <span style="color:#ff7b72">if</span> (!LoRa.begin(<span style="color:#a5d6ff">915E6</span>)) {</div>
+        <div>    Serial.println(<span style="color:#a5d6ff">"LoRa FAIL"</span>);</div>
+        <div>    <span style="color:#ff7b72">return</span>;</div>
+        <div>  }</div>
+        <div>  <span style="color:#d2a8ff">sendData</span>(); <span style="color:#8b949e">// Send readings</span></div>
+        <div>  LoRa.end();</div>
+        <div>  <span style="color:#8b949e">// Deep sleep for 15 min</span></div>
+        <div>  esp_deep_sleep(SLEEP_US);</div>
+        <div>}</div>
+        <br/>
+        <div><span style="color:#ff7b72">void</span> <span style="color:#d2a8ff">sendData</span>() {</div>
+        <div>  <span style="color:#ff7b72">int</span> rawSoil = analogRead(SOIL_PIN);</div>
+        <div>  <span style="color:#ff7b72">int</span> moisture = map(rawSoil,<span style="color:#a5d6ff">2950</span>,<span style="color:#a5d6ff">1200</span>,<span style="color:#a5d6ff">0</span>,<span style="color:#a5d6ff">100</span>);</div>
+        <div>  moisture = constrain(moisture, <span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">100</span>);</div>
+        <div>  <span style="color:#ff7b72">float</span> temp = dht.readTemperature();</div>
+        <div>  <span style="color:#ff7b72">float</span> hum  = dht.readHumidity();</div>
+        <br/>
+        <div>  <span style="color:#8b949e">// Build JSON payload</span></div>
+        <div>  String payload = <span style="color:#a5d6ff">"{"</span>;</div>
+        <div>  payload += <span style="color:#a5d6ff">"\"id\":\""</span> + String(FIELD_ID) + <span style="color:#a5d6ff">"\","</span>;</div>
+        <div>  payload += <span style="color:#a5d6ff">"\"m\":"</span> + String(moisture) + <span style="color:#a5d6ff">","</span>;</div>
+        <div>  payload += <span style="color:#a5d6ff">"\"t\":"</span> + String(temp) + <span style="color:#a5d6ff">","</span>;</div>
+        <div>  payload += <span style="color:#a5d6ff">"\"h\":"</span> + String(hum);</div>
+        <div>  payload += <span style="color:#a5d6ff">"}"</span>;</div>
+        <br/>
+        <div>  LoRa.beginPacket();</div>
+        <div>  LoRa.print(payload);</div>
+        <div>  LoRa.endPacket();</div>
+        <div>  Serial.println(payload);</div>
+        <div>}</div>
+        <br/>
+        <div><span style="color:#ff7b72">void</span> <span style="color:#d2a8ff">loop</span>() {} <span style="color:#8b949e">// never runs (deep sleep)</span></div>
+      </div>
+      <div class="mt-3 p-3 rounded-xl text-xs" style="background:#f0fdf4">
+        <strong>Libraries needed (Arduino IDE):</strong> <code>arduino-LoRa</code> by Sandeep Mistry, <code>DHT sensor library</code> by Adafruit.
+        Install via <strong>Sketch → Include Library → Manage Libraries</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end max-w -->
+
+<!-- FOOTER -->
+<div class="text-center py-8 mt-4 border-t" style="border-color:#eef4ee">
+  <div class="text-sm font-semibold" style="color:var(--green-dark)">AquaSense Zimbabwe · Hardware Blueprint v1.0</div>
+  <div class="text-xs text-gray-400 mt-1">Prepared by Prince Ruswa · Uncommon Builders Club · 2026</div>
+  <div class="text-xs text-gray-400">For questions: Use the AquaSense dashboard Field Guide section</div>
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+</script>
+</body>
+</html>
